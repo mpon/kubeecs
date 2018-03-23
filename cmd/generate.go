@@ -26,6 +26,7 @@ import (
 
 	"github.com/mpon/kubeecs/awsecs"
 	"github.com/spf13/cobra"
+	yaml "gopkg.in/yaml.v2"
 )
 
 var generateCmdFlagCluster string
@@ -42,8 +43,26 @@ var generateCmd = &cobra.Command{
 		}
 		services := []string{args[0]}
 		describeTaskDefinitionOutput := awsecs.DescribeTaskDefinitions(generateCmdFlagCluster, services)
-		fmt.Println(describeTaskDefinitionOutput)
+		values := Values{
+			ServiceName: args[0],
+			ServicePort: *describeTaskDefinitionOutput[0].TaskDefinition.ContainerDefinitions[0].PortMappings[0].ContainerPort,
+			Image:       *describeTaskDefinitionOutput[0].TaskDefinition.ContainerDefinitions[0].Image,
+		}
+
+		v, err := yaml.Marshal(values)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		fmt.Printf("%s", v)
 	},
+}
+
+// Values represents values.yaml
+type Values struct {
+	ServiceName string `yaml:"serviceName"`
+	ServicePort int64  `yaml:"servicePort"`
+	Image       string `yaml:"image"`
 }
 
 func init() {
