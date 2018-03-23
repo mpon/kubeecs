@@ -24,8 +24,11 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/mpon/kubeecs/awsecs"
 	"github.com/spf13/cobra"
 )
+
+var generateCmdFlagCluster string
 
 // generateCmd represents the generate command
 var generateCmd = &cobra.Command{
@@ -34,16 +37,20 @@ var generateCmd = &cobra.Command{
 	Short:   "Generate kubernetes manifest",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 1 {
-			fmt.Println("usage: kubeecs gen <ECS service name>")
+			fmt.Println("usage: kubeecs gen -c <ECS cluster> <ECS service name>")
 			os.Exit(1)
 		}
-		service := args[0]
-		fmt.Println(service)
+		services := []string{args[0]}
+		describeTaskDefinitionOutput := awsecs.DescribeTaskDefinitions(generateCmdFlagCluster, services)
+		fmt.Println(describeTaskDefinitionOutput)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(generateCmd)
+
+	generateCmd.Flags().StringVarP(&generateCmdFlagCluster, "cluster", "c", "", "AWS ECS cluster")
+	generateCmd.MarkFlagRequired("cluster")
 
 	// Here you will define your flags and configuration settings.
 
